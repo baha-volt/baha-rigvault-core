@@ -1,5 +1,11 @@
 package domain;
 
+import exception.hardwarecomponent.InvalidHardwareComponentBrandException;
+import exception.hardwarecomponent.InvalidHardwareComponentModelException;
+import exception.hardwarecomponent.InvalidHardwareComponentQuantityException;
+import exception.hardwarecomponent.InvalidHardwareComponentSetupException;
+import exception.hardwarecomponent.InvalidHardwareComponentTypeException;
+
 public class HardwareComponent {
     private Long id;
     private String type;
@@ -66,5 +72,38 @@ public class HardwareComponent {
 
     public void setSetup(Setup setup) {
         this.setup = setup;
+    }
+
+    public void validateType(String type) {
+        if (null == type || type.isBlank()) {
+            throw new InvalidHardwareComponentTypeException("Invalid component type");
+        }
+    }
+
+    public void validateBrand(String brand) {
+        if (null == brand || brand.isBlank()) {
+            throw new InvalidHardwareComponentBrandException("Invalid component brand");
+        }
+    }
+
+    public void validateModel(String model) {
+        if (null == model || model.isBlank()) {
+            throw new InvalidHardwareComponentModelException("Invalid component model");
+        }
+    }
+
+    public void validateQuantity(Integer quantity) {
+        if (null == quantity) {
+            throw new InvalidHardwareComponentQuantityException("Quantity cannot be null");
+        }
+        if (quantity <= 0) {
+            throw new InvalidHardwareComponentQuantityException("Quantity must be greater than zero");
+        }
+    }
+
+    public void validateSetup(Setup setup) {
+        if (null == setup) {
+            throw new InvalidHardwareComponentSetupException("Component must be assigned to a valid setup");
+        }
     }
 }
