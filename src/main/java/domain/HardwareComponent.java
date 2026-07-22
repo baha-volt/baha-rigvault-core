@@ -67,16 +67,4 @@ public class HardwareComponent {
     public void setSetup(Setup setup) {
         this.setup = setup;
     }
-
-    @Override
-    public String toString() {
-        return "Component{" +
-                "id=" + id +
-                ", tipo='" + type + '\'' +
-                ", marca='" + brand + '\'' +
-                ", modelo='" + model + '\'' +
-                ", cantidad=" + quantity +
-                ", setup=" + setup +
-                '}';
-    }
 }

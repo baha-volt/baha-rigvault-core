@@ -109,7 +109,7 @@ public class TestRigUserRepository {
         assertEquals("Alejandro Modificado", result.getName());
         assertEquals("ale.mod@email.com", result.getEmail());
 
-        // Persisrance check
+        // Persistance check
         RigUser persistenceCheck = repository.getRigUserById(1L);
         assertEquals("Alejandro Modificado", persistenceCheck.getName());
     }

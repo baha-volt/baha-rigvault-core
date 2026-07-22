@@ -1,5 +1,9 @@
 package domain;
 
+import exception.setup.InvalidSetupDescriptionException;
+import exception.setup.InvalidSetupNameException;
+import exception.setup.InvalidSetupUserException;
+
 public class Setup {
     private Long id;
     private String name;
@@ -48,13 +52,27 @@ public class Setup {
         this.rigUser = rigUser;
     }
 
-    @Override
-    public String toString() {
-        return "Setup{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", user=" + rigUser +
-                '}';
+    public void validateName(String name) {
+        if (null == name || name.isBlank()) {
+            throw new InvalidSetupNameException("Invalid setup name");
+        }
+        if (name.length() < 3 || name.length() > 50) {
+            throw new InvalidSetupNameException("Setup name must contain between 3 and 50 characters");
+        }
+    }
+
+    public void validateDescription(String description) {
+        if (null == description || description.isBlank()) {
+            throw new InvalidSetupDescriptionException("Invalid setup description");
+        }
+        if (description.length() > 255) {
+            throw new InvalidSetupDescriptionException("Setup description cannot exceed 255 characters");
+        }
+    }
+
+    public void validateUser(RigUser rigUser) {
+        if (null == rigUser) {
+            throw new InvalidSetupUserException("Setup must have a valid user assigned");
+        }
     }
 }

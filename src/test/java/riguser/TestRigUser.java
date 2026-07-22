@@ -164,11 +164,6 @@ public class TestRigUser {
         assertDoesNotThrow(() -> rigUser.validatePassword(password));
     }
 
-
-    /*
-    Opcionales
-     */
-
     @Test
     void shouldCreateRigUserWithConstructor() {
 
@@ -215,5 +210,3 @@ public class TestRigUser {
         );
     }
 }
-
-
