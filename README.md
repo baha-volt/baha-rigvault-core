@@ -2,6 +2,8 @@
 
 ## Rig Setup & Hardware Component Management Core
 
+### Se crea hito 3 a partir de hito 1
+
 > **Build it. Organize it. Validate it.**
 
 Un núcleo de software desarrollado en **Java puro** para gestionar, organizar y validar componentes de hardware dentro de configuraciones (*setups*) personalizadas de usuarios.
@@ -51,69 +53,32 @@ El proyecto implementa una arquitectura inspirada en **Clean Architecture** y **
 src
 ├── main
 │   ├── java
-│   │   ├── domain
-│   │   │   ├── HardwareComponent.java
-│   │   │   ├── RigUser.java
-│   │   │   └── Setup.java
-│   │   │
-│   │   ├── exception
-│   │   │   ├── hardwarecomponent
-│   │   │   │   ├── DuplicateHardwareComponentException.java
-│   │   │   │   ├── HardwareComponentNotFoundException.java
-│   │   │   │   ├── InvalidHardwareComponentBrandException.java
-│   │   │   │   ├── InvalidHardwareComponentModelException.java
-│   │   │   │   ├── InvalidHardwareComponentQuantityException.java
-│   │   │   │   └── InvalidHardwareComponentTypeException.java
-│   │   │   │
-│   │   │   ├── riguser
-│   │   │   │   ├── DuplicateRigUserException.java
-│   │   │   │   ├── InvalidRigUserEmailException.java
-│   │   │   │   ├── InvalidRigUserNameException.java
-│   │   │   │   ├── InvalidRigUserPasswordException.java
-│   │   │   │   └── RigUserNotFoundException.java
-│   │   │   │
-│   │   │   └── setup
-│   │   │       ├── DuplicateSetupException.java
-│   │   │       ├── InvalidSetupDescriptionException.java
-│   │   │       ├── InvalidSetupNameException.java
-│   │   │       └── SetupNotFoundException.java
-│   │   │
-│   │   ├── repository
-│   │   │   ├── HardwareComponentRepository.java
-│   │   │   ├── RigUserRepository.java
-│   │   │   └── SetupRepository.java
-│   │   │
-│   │   └── service
-│   │       ├── hardwarecomponent
-│   │       │   ├── HardwareComponentService.java
-│   │       │   └── HardwareComponentServiceImpl.java
-│   │       │
-│   │       ├── riguser
-│   │       │   ├── RigUserService.java
-│   │       │   └── RigUserServiceImpl.java
-│   │       │
-│   │       └── setup
-│   │           ├── SetupService.java
-│   │           └── SetupServiceImpl.java
-│   │
+│   │   └── cl
+│   │       └── bahatech
+│   │           ├── application
+│   │           ├── domain
+│   │           │   ├── entity
+│   │           │   ├── exception
+│   │           │   │   ├── componenttype
+│   │           │   │   ├── hardwarecomponent
+│   │           │   │   ├── riguser
+│   │           │   │   └── setup
+│   │           │   ├── repository
+│   │           │   └── valueobject
+│   │           └── infrastructure
+│   │               └── persistence
 │   └── resources
-│
 └── test
     └── java
-        ├── hardwarecomponent
-        │   ├── TestHardwareComponent.java
-        │   ├── TestHardwareComponentRepository.java
-        │   └── TestHardwareComponentServiceImpl.java
-        │
-        ├── riguser
-        │   ├── TestRigUser.java
-        │   ├── TestRigUserRepository.java
-        │   └── TestRigUserServiceImpl.java
-        │
-        └── setup
-            ├── TestSetup.java
-            ├── TestSetupRepository.java
-            └── TestSetupServiceImpl.java
+        └── cl
+            └── bahatech
+                ├── application
+                │   ├── service
+                │   └── usecase
+                ├── domain
+                │   └── entity
+                └── infrastructure
+                    └── persistence
 ```
 
 ---
@@ -122,10 +87,11 @@ src
 
 | Paquete | Responsabilidad |
 |----------|-----------------|
-| **domain** | Entidades del dominio y reglas de negocio. |
+| **domain** | Entidades del dominio. Se autovalidan en su constructor y en sus setters: nunca pueden existir en un estado invalido. |
 | **exception** | Excepciones personalizadas organizadas por contexto de negocio. |
-| **repository** | Persistencia en memoria y acceso a datos mediante abstracciones. |
-| **service** | Casos de uso y lógica de negocio que coordinan el dominio. |
+| **repository** | *Ports* de salida: interfaces que declaran lo que la aplicacion necesita persistir, sin decir como. |
+| **infrastructure.persistence** | *Adapters* que implementan esos ports en memoria (`InMemory*Repository`). Es el unico paquete que sabe como se persisten los datos hoy. |
+| **service** | Casos de uso: orquestan el dominio y los ports (chequear duplicados, invocar el repository), sin reimplementar validaciones que ya son responsabilidad de la entidad. |
 | **test** | Suite de pruebas unitarias para entidades, repositorios y servicios utilizando JUnit 5 y Mockito. |
 
 ---
@@ -214,6 +180,28 @@ Este proyecto fue desarrollado para practicar y consolidar conocimientos en:
 - Validaciones de negocio.
 - Manejo de excepciones personalizadas.
 - Cobertura de código con JaCoCo.
+
+---
+
+# 🧭 Hito 3 — Hacia un dominio DDD real
+
+El Hito 1 dejó una arquitectura en capas (`domain` / `service` / `repository`) con nombres inspirados en DDD, pero sin varias de las garantías que ese vocabulario promete. Este hito corrige los puntos mas importantes sin rehacer el proyecto desde cero.
+
+## Que cambió
+
+**1. Las entidades ahora se autovalidan.**
+Antes, `RigUser`, `Setup` y `HardwareComponent` podían construirse (o mutarse via setters) con datos inválidos; la validación solo se disparaba si el `Service` la invocaba explícitamente. Ahora cada constructor y cada setter llama a las invariantes de la propia entidad, así que **un objeto de dominio en memoria siempre es válido** — sin depender de que la capa de aplicación se acuerde de validar. Como consecuencia, los `Service` (`RigUserServiceImpl`, `SetupServiceImpl`, `HardwareComponentServiceImpl`) ya no revalidan campo por campo: solo orquestan (chequear duplicados, delegar al repository).
+
+**2. Nueva entidad `ComponentType`.**
+`HardwareComponent.type` dejó de ser un `String` libre ("GPU", "RAM"...) y ahora es una referencia a `ComponentType` (`id`, `name`, `description`), con su propio repository, service y excepciones (`exception/componenttype`). Es un catálogo con identidad y ciclo de vida propios, no un valor repetido en cada componente.
+
+Como demostración de una regla de negocio real (a diferencia de las otras tres, que detectan "duplicado" por colisión de ID — una regla técnica de persistencia), `ComponentTypeServiceImpl` valida la invariante real: no puede haber dos tipos con el mismo `name`.
+
+**3. Los repositorios ahora son Ports.**
+`RigUserRepository`, `SetupRepository`, `HardwareComponentRepository` y el nuevo `ComponentTypeRepository` pasaron de ser clases concretas a **interfaces** (ports de salida, en el sentido de Ports & Adapters). Sus implementaciones en memoria (`InMemoryRigUserRepository`, `InMemorySetupRepository`, `InMemoryHardwareComponentRepository`, `InMemoryComponentTypeRepository`) viven ahora en `infrastructure.persistence`, como adapters. Esto deja el terreno preparado para el Hito 4 (Spring Data JPA / PostgreSQL): se podrá agregar un adapter nuevo (`JpaRigUserRepositoryAdapter`, etc.) sin tocar el dominio ni los `Service`.
+
+**4. Custom port, servicios y casos de uso**
+Se agrega un custom port a application y caso de uso, haciendo refactorización de servicios para adaptarlo a DDD
 
 ---
 
